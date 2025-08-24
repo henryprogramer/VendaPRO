@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: venda_user
+      POSTGRES_PASSWORD: venda_pass
+      POSTGRES_DB: vendapro
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./web:/app
+    ports:
+      - "5433:8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_NAME=vendapro
+      - DATABASE_USER=venda_user
+      - DATABASE_PASSWORD=venda_pass
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+
+volumes:
+  postgres_data:
