@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout
+from desktop.models import database
 
 class BibliotecaWindow(QWidget):
     def __init__(self, user=None):

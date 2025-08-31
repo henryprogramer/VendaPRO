@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout
+from desktop.models import database
 
 class EstoqueWindow(QWidget):
     def __init__(self, user=None):

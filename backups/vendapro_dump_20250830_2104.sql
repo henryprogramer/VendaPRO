@@ -1,32 +1,12 @@
-import sqlite3
-from pathlib import Path
-
-# Caminho do banco
-DB_PATH = Path(__file__).parent / "vendapro.db"
-
-def get_connection():
-    """Retorna conexão com row_factory para acessar colunas por nome."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-def init_db():
-    """Cria todas as tabelas do sistema se não existirem."""
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    # Usuários do sistema
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS usuario (
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE usuario (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL
-    )
-    """)
-
-    # Clientes
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS cliente (
+    );
+INSERT INTO usuario VALUES(1,'Henry','9088');
+CREATE TABLE cliente (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         nome TEXT NOT NULL,
@@ -38,12 +18,8 @@ def init_db():
         data_prospeccao TEXT,
         status TEXT DEFAULT 'ATIVO',
         FOREIGN KEY(user_id) REFERENCES usuario(id)
-    )
-    """)
-
-    # Funcionários
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS funcionario (
+    );
+CREATE TABLE funcionario (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         nome TEXT NOT NULL,
@@ -52,23 +28,15 @@ def init_db():
         data_nascimento TEXT,
         cargo TEXT,
         FOREIGN KEY(user_id) REFERENCES usuario(id)
-    )
-    """)
-
-    # Fornecedores
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS fornecedor (
+    );
+CREATE TABLE fornecedor (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         nome TEXT NOT NULL,
         contato TEXT,
         FOREIGN KEY(user_id) REFERENCES usuario(id)
-    )
-    """)
-
-    # Produtos
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS produto (
+    );
+CREATE TABLE produto (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         nome TEXT NOT NULL,
@@ -83,12 +51,8 @@ def init_db():
         observacao TEXT, -- para registrar se o produto está parado, pouco buscado etc
         FOREIGN KEY(user_id) REFERENCES usuario(id),
         FOREIGN KEY(fornecedor_id) REFERENCES fornecedor(id)
-    )
-    """)
-
-    # Estoque
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS estoque_movimento (
+    );
+CREATE TABLE estoque_movimento (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         produto_id INTEGER NOT NULL,
         tipo TEXT NOT NULL, -- ENTRADA ou SAÍDA
@@ -96,12 +60,8 @@ def init_db():
         data_movimento TEXT NOT NULL,
         observacao TEXT,
         FOREIGN KEY(produto_id) REFERENCES produto(id)
-    )
-    """)
-
-    # Vendas
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS vendas (
+    );
+CREATE TABLE vendas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         cliente_id INTEGER,
@@ -109,12 +69,8 @@ def init_db():
         total REAL,
         FOREIGN KEY(user_id) REFERENCES usuario(id),
         FOREIGN KEY(cliente_id) REFERENCES cliente(id)
-    )
-    """)
-
-    # Delivery
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS delivery (
+    );
+CREATE TABLE delivery (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         venda_id INTEGER,
@@ -122,12 +78,8 @@ def init_db():
         data_entrega TEXT,
         FOREIGN KEY(user_id) REFERENCES usuario(id),
         FOREIGN KEY(venda_id) REFERENCES vendas(id)
-    )
-    """)
-
-    # Caixa (controle financeiro)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS caixa (
+    );
+CREATE TABLE caixa (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         data TEXT,
@@ -136,24 +88,15 @@ def init_db():
         saldo REAL,
         observacao TEXT,
         FOREIGN KEY(user_id) REFERENCES usuario(id)
-    )
-    """)
-
-    # Arquivos/Pastas
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS arquivos (
+    );
+CREATE TABLE arquivos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         nome TEXT NOT NULL,
         caminho TEXT,
         tipo TEXT,
         FOREIGN KEY(user_id) REFERENCES usuario(id)
-    )
-    """)
-
-    conn.commit()
-    conn.close()
-    print("Banco de dados inicializado com sucesso!")
-
-if __name__ == "__main__":
-    init_db()
+    );
+DELETE FROM sqlite_sequence;
+INSERT INTO sqlite_sequence VALUES('usuario',1);
+COMMIT;

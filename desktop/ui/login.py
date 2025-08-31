@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout
 from PyQt5.QtGui import QFont, QPixmap
 from PyQt5.QtCore import Qt
 import sqlite3
-from models import database
+from desktop.models import database
 
 class LoginWindow(QWidget):
     def __init__(self, on_login_success=None):
@@ -68,6 +68,12 @@ class LoginWindow(QWidget):
             }
         """)
         self.btn_submit.clicked.connect(self.submit)
+        
+        # Conecta Enter dos campos ao submit
+        self.user_input.returnPressed.connect(self.btn_submit.click)
+        self.pass_input.returnPressed.connect(self.btn_submit.click)
+        self.confirm_input.returnPressed.connect(self.btn_submit.click)
+
         self.layout.addWidget(self.btn_submit)
 
         # Alternar login/cadastro

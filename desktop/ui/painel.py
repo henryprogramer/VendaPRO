@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve
 from PyQt5.QtGui import QColor
-
+from desktop.models import database
 
 class ExpandableCard(QFrame):
     expanded_card = None  # controla qual card está expandido

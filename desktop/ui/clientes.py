@@ -4,8 +4,7 @@ from PyQt5.QtWidgets import (
     QLineEdit, QMessageBox, QComboBox, QFrame
 )
 from PyQt5.QtCore import Qt
-from models import database
-
+from desktop.models import database
 
 class ClientesWindow(QWidget):
     def __init__(self, user):
@@ -225,12 +224,56 @@ class ClientesWindow(QWidget):
 
         btn_save.clicked.connect(salvar)
         dialog.exec_()
-
     def view_client(self, client):
-        QMessageBox.information(
-            self, "Visualizar Cliente",
-            f"Nome: {client[1]}\nEmail: {client[2]}\nTelefone: {client[3]}"
-        )
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Visualizar Cliente")
+        dialog.setMinimumWidth(400)
+
+        layout = QVBoxLayout()
+
+        # Card container
+        card = QFrame()
+        card.setStyleSheet("""
+            QFrame {
+                background: #ffffff;
+                border: 2px solid #007acc;
+                border-radius: 8px;
+                padding: 12px;
+            }
+            QLabel {
+                font-size: 14px;
+                margin: 4px 0;
+            }
+            QLabel.title {
+                font-size: 16px;
+                font-weight: bold;
+                color: #007acc;
+                margin-bottom: 8px;
+            }
+        """)
+        card_layout = QVBoxLayout()
+
+        # Título
+        lbl_title = QLabel(f"{client[1]}")
+        lbl_title.setObjectName("title")
+        lbl_title.setProperty("class", "title")
+        card_layout.addWidget(lbl_title)
+
+        # Campos
+        card_layout.addWidget(QLabel(f"Email: {client[2]}"))
+        card_layout.addWidget(QLabel(f"Telefone: {client[3]}"))
+
+        card.setLayout(card_layout)
+        layout.addWidget(card)
+
+        # Botão fechar
+        btn_close = QPushButton("Fechar")
+        btn_close.setStyleSheet("background:#f44336; font-weight:bold;")
+        btn_close.clicked.connect(dialog.close)
+        layout.addWidget(btn_close, alignment=Qt.AlignRight)
+
+        dialog.setLayout(layout)
+        dialog.exec_()
 
     def delete_client(self, client_id):
         confirm = QMessageBox.question(

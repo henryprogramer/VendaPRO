@@ -1,28 +1,33 @@
 import sys
 from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent))  # adiciona desktop ao path
+
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QLabel, QStackedWidget, QSizePolicy, QFrame
+    QPushButton, QLabel, QStackedWidget, QSizePolicy, QFrame, QToolTip
 )
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QPixmap, QIcon
+from PyQt5.QtGui import QPixmap, QIcon, QPainter, QBrush, QColor, QCursor
 
-# Imports das janelas
 from models import database
-from ui.login import LoginWindow
-from ui.painel import PainelWindow
-from ui.caixa import CaixaWindow
-from ui.clientes import ClientesWindow
-from ui.produtos import ProdutosWindow
-from ui.estoque import EstoqueWindow
-from ui.fornecedores import FornecedoresWindow
-from ui.vendas import VendasWindow
-from ui.biblioteca import BibliotecaWindow
+from desktop.ui.login import LoginWindow
+from desktop.ui.painel import PainelWindow
+from desktop.ui.caixa import CaixaWindow
+from desktop.ui.clientes import ClientesWindow
+from desktop.ui.produtos import ProdutosWindow
+from desktop.ui.estoque import EstoqueWindow
+from desktop.ui.fornecedores import FornecedoresWindow
+from desktop.ui.funcionarios import FuncionariosWindow
+from desktop.ui.biblioteca import BibliotecaWindow
 
 class MainWindow(QMainWindow):
     def __init__(self, user=None):
         super().__init__()
-        self.user = user  # dicionário do login
+        self.user = user
+        
+        # Remove barra nativa
+        self.setWindowFlags(Qt.FramelessWindowHint)
         
         self.setWindowIcon(QIcon(QPixmap("desktop/assets/img/logo_vendapro.png")))
         self.setWindowTitle("VendaPRO - Desktop")
@@ -66,10 +71,64 @@ class MainWindow(QMainWindow):
         logo_container = QWidget()
         logo_container.setLayout(logo_layout)
         header_layout.addWidget(logo_container, alignment=Qt.AlignCenter)
+        
+        # --- Layout à direita do header ---
+        right_layout = QHBoxLayout()
+        right_layout.setSpacing(4)  # espaço entre os elementos
 
-        # Perfil do usuário
-        self.perfil_label = QLabel(f"Usuário: {self.user['username'] if self.user else 'Admin'}")
-        header_layout.addWidget(self.perfil_label, alignment=Qt.AlignRight)
+        # Perfil circular
+        self.perfil_btn = QPushButton()
+        self.perfil_btn.setFixedSize(20, 20)
+        self.perfil_btn.setStyleSheet("""
+            QPushButton {
+                border-radius: 20px;
+                background-color: #ffffff;
+                border: 1px solid #cccccc;
+            }
+            QPushButton:hover {
+                background-color: #e6e6e6;
+            }
+        """)
+        self.perfil_btn.setToolTip(self.user['username'] if self.user else "Admin")
+
+        def mostrar_nome():
+            QToolTip.showText(QCursor.pos(), f"Usuário: {self.user['username'] if self.user else 'Admin'}")
+
+        self.perfil_btn.clicked.connect(mostrar_nome)
+
+        right_layout.addWidget(self.perfil_btn)
+
+        # Botões de minimizar, maximizar e fechar
+        self.btn_min = QPushButton("🗕")
+        self.btn_max = QPushButton("🗖")
+        self.btn_close = QPushButton("✖")
+
+        for btn in [self.btn_min, self.btn_max, self.btn_close]:
+            btn.setFixedSize(30, 30)
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #001c46;
+                    color: white;
+                    border: none;
+                    font-size: 14px;
+                }
+                QPushButton:hover {
+                    background-color: #ff5555;
+                }
+            """)
+
+        self.btn_min.clicked.connect(self.showMinimized)
+        self.btn_max.clicked.connect(self.toggle_max_restore)
+        self.btn_close.clicked.connect(self.close)
+
+        right_layout.addWidget(self.btn_min)
+        right_layout.addWidget(self.btn_max)
+        right_layout.addWidget(self.btn_close)
+
+        # Container para alinhar tudo à direita
+        right_container = QWidget()
+        right_container.setLayout(right_layout)
+        header_layout.addWidget(right_container, alignment=Qt.AlignRight)
 
         # ========== CORPO ==========
         body = QHBoxLayout()
@@ -84,13 +143,14 @@ class MainWindow(QMainWindow):
 
         # Botões do menu com ícones
         menu_items = [
+            ("INÍCIO", ""),  # botão para retornar à página inicial
             ("PAINEL", "desktop/assets/img/icon_dashboard.png"),
             ("CAIXA", "desktop/assets/img/icon_caixa.png"),
             ("CLIENTES", "desktop/assets/img/icon_clientes.png"),
             ("PRODUTOS", "desktop/assets/img/icon_produtos.png"),
             ("ESTOQUE", "desktop/assets/img/icon_estoque.png"),
             ("FORNECEDORES", "desktop/assets/img/icon_fornecedores.png"),
-            ("VENDAS", "desktop/assets/img/icon_vendas.png"),
+            ("FUNCIONÁRIOS", "desktop/assets/img/icon_funcionarios.png"),
             ("DELIVERY", ""),  # placeholder
             ("BIBLIOTECA", "desktop/assets/img/icon_biblioteca.png")
         ]
@@ -143,7 +203,7 @@ class MainWindow(QMainWindow):
         self.pages["PRODUTOS"] = ProdutosWindow(user=self.user)
         self.pages["ESTOQUE"] = EstoqueWindow(user=self.user)
         self.pages["FORNECEDORES"] = FornecedoresWindow(user=self.user)
-        self.pages["VENDAS"] = VendasWindow(user=self.user)
+        self.pages["FUNCIONÁRIOS"] = FuncionariosWindow(user=self.user)
         self.pages["BIBLIOTECA"] = BibliotecaWindow(user=self.user)
         self.pages["DELIVERY"] = QLabel("🚚 Módulo Delivery em construção...")
 
@@ -191,6 +251,23 @@ class MainWindow(QMainWindow):
         for name in self.menu_buttons:
             self.menu_buttons[name].clicked.connect(lambda checked, n=name: self.mudar_area(n))
 
+    def toggle_max_restore(self):
+        if self.isMaximized():
+            self.showNormal()
+        else:
+            self.showMaximized()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.dragPos = event.globalPos()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.LeftButton:
+            self.move(self.pos() + event.globalPos() - self.dragPos)
+            self.dragPos = event.globalPos()
+            event.accept()
+
+    
     # Alterna visibilidade do menu lateral
     def toggle_menu(self):
         self.menu_widget.setVisible(not self.menu_widget.isVisible())
@@ -200,6 +277,7 @@ class MainWindow(QMainWindow):
         if nome in self.pages:
             self.content_widget.setCurrentWidget(self.pages[nome])
         else:
+            # retorna à página inicial
             self.content_widget.setCurrentWidget(self.inicio_widget)
 
     # Exibe alerta ou info para redes sociais
